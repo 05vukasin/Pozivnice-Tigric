@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pozivnica za rođendan</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      background: url('pozivnica-online.png') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .form-container input {
+      font-size: 16px;
+      padding: 6px 8px;
+      border: none;
+      border-bottom: 2px solid #ccc;
+      margin: 0 4px;
+      width: auto;
+      max-width: 120px;
+      background: transparent;
+      outline: none;
+    }
+
+    .form-container input[type="time"] {
+      max-width: 80px;
+    }
+
+    .form-container button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background-color: #333;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .obavestenje {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="obavestenje" id="obavestenje">Pozivnica je sačuvana kao slika.</div>
+
+  <div class="form-container">
+    Pozivam 
+    <input type="text" id="imeOsobe" placeholder="ime gosta" /> 
+    u svoje carstvo, povodom proslave mog rođendana koji će se održati dana 
+    <input type="date" id="datum" /> 
+    u 
+    <input type="time" id="vreme" /> 
+    h. Slavljenik: 
+    <input type="text" id="slavljenik" placeholder="ime slavljenika" />
+    
+    <button onclick="generisiPozivnicu()">Sačuvaj</button>
+  </div>
+
+  <canvas id="pozivnicaCanvas" width="768" height="960"></canvas>
+
+  <script>
+    window.onload = function () {
+      const slavljenik = getCookie("slavljenik");
+      const datum = getCookie("datum");
+      const vreme = getCookie("vreme");
+      if (slavljenik) document.getElementById("slavljenik").value = slavljenik;
+      if (datum) document.getElementById("datum").value = datum;
+      if (vreme) document.getElementById("vreme").value = vreme;
+    };
+
+    function generisiPozivnicu() {
+      const slavljenik = document.getElementById("slavljenik").value.trim();
+      const datum = document.getElementById("datum").value.trim();
+      const vreme = document.getElementById("vreme").value.trim();
+      const imeOsobe = document.getElementById("imeOsobe").value.trim();
+
+      if (!slavljenik || !datum || !vreme || !imeOsobe) {
+        alert("Popunite sva polja.");
+        return;
+      }
+
+      document.cookie = `slavljenik=${slavljenik}; path=/; max-age=31536000`;
+      document.cookie = `datum=${datum}; path=/; max-age=31536000`;
+      document.cookie = `vreme=${vreme}; path=/; max-age=31536000`;
+
+      const datumObj = new Date(datum);
+      const datumString = datumObj.toLocaleDateString('sr-RS');
+      const vremeFormatted = vreme;
+
+      const canvas = document.getElementById("pozivnicaCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const img = new Image();
+      img.onload = function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 6;
+
+        const width = canvas.width;
+
+        // name-for
+        ctx.fillText(imeOsobe, width / 2, 663); // (top: 67%)
+        // date
+        ctx.textAlign = "left";
+        ctx.fillText(datumString, width * 0.48, 761); // (top: 77%)
+        // hour
+        ctx.fillText(vremeFormatted, width * 0.72, 761);
+        // name
+        ctx.textAlign = "center";
+        ctx.fillText(slavljenik, width / 2, 880); // (top: 89%)
+
+        const link = document.createElement("a");
+        link.download = "pozivnica.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+        document.getElementById("imeOsobe").value = "";
+        prikaziObavestenje();
+      };
+
+      img.src = "pozivnica-online.png";
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    function prikaziObavestenje() {
+      const div = document.getElementById("obavestenje");
+      div.style.display = "block";
+      setTimeout(() => div.style.display = "none", 3000);
+    }
+  </script>
+</body>
+</html>
